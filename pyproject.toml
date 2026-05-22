@@ -1,0 +1,14 @@
+[project]
+name = "projet-test-citerneo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "email-validator>=2.3.0",
+    "fastapi>=0.136.1",
+    "jinja2>=3.1.6",
+    "python-multipart>=0.0.29",
+    "sqlmodel>=0.0.38",
+    "uvicorn>=0.47.0",
+]
