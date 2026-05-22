@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Commandes de {{ client.name }}</h2>
+<p style="margin-bottom:1rem; color:#666;">{{ client.email }} — {{ client.phone }}</p>
+
+<div class="card">
+    {% if orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Référence</th>
+                <th>Montant</th>
+                <th>Date</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.reference }}</td>
+                <td>{{ "%.2f €"|format(order.total_amount) }}</td>
+                <td>{{ order.created_at.strftime("%d/%m/%Y") }}</td>
+                <td>{{ order.status.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">Ce client n'a aucune commande.</p>
+    {% endif %}
+</div>
+
+<p style="margin-top:1rem;"><a href="/clients/">← Retour aux clients</a></p>
+{% endblock %}

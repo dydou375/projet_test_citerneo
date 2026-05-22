@@ -1,10 +1,7 @@
-from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
-
-from app.models.commande import Order
 
 
 class Client(SQLModel, table=True):

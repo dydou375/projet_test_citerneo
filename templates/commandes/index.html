@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Commandes</h2>
+<div class="layout">
+
+    <div class="form-card card">
+        <h3 style="margin-bottom:1rem;">Nouvelle commande</h3>
+        <form hx-post="/commandes/"
+              hx-target="#order-list"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful) this.reset()">
+            <label>Référence</label>
+            <input type="text" name="reference" required placeholder="CMD-005">
+
+            <label>Montant (€)</label>
+            <input type="number" name="total_amount" required min="0.01" step="0.01" placeholder="99.90">
+
+            <label>Client</label>
+            <select name="client_id" required>
+                <option value="">-- Choisir un client --</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}">{{ client.name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Créer la commande</button>
+        </form>
+    </div>
+
+    {% include "commandes/_list.html" %}
+
+</div>
+{% endblock %}

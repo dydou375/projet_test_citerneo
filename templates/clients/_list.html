@@ -1,0 +1,29 @@
+<div id="client-list" class="list-card card">
+    <h3 style="margin-bottom:1rem;">Liste des clients ({{ clients|length }})</h3>
+    {% if clients %}
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Adresse</th>
+                <th>Créé le</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td><a href="/clients/{{ client.id }}/commandes">{{ client.name }}</a></td>
+                <td>{{ client.email }}</td>
+                <td>{{ client.phone }}</td>
+                <td>{{ client.address }}</td>
+                <td>{{ client.created_at.strftime("%d/%m/%Y") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">Aucun client pour l'instant.</p>
+    {% endif %}
+</div>

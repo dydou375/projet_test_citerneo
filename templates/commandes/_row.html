@@ -1,0 +1,21 @@
+<tr id="order-{{ order.id }}">
+    <td>{{ order.reference }}</td>
+    <td>{{ order.client.name if order.client else "—" }}</td>
+    <td>{{ "%.2f €"|format(order.total_amount) }}</td>
+    <td>{{ order.created_at.strftime("%d/%m/%Y") }}</td>
+    <td>
+        <select class="statut"
+                name="status"
+                hx-patch="/commandes/{{ order.id }}/statut"
+                hx-target="#order-{{ order.id }}"
+                hx-swap="outerHTML"
+                hx-trigger="change"
+                hx-include="this">
+            {% for s in statuses %}
+            <option value="{{ s.value }}" {% if order.status == s %}selected{% endif %}>
+                {{ s.value }}
+            </option>
+            {% endfor %}
+        </select>
+    </td>
+</tr>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Clients</h2>
+<div class="layout">
+
+    <div class="form-card card">
+        <h3 style="margin-bottom:1rem;">Nouveau client</h3>
+        <form hx-post="/clients/"
+              hx-target="#client-list"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful) this.reset()">
+            <label>Nom</label>
+            <input type="text" name="name" required placeholder="Alice Dupont">
+
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="alice@exemple.fr">
+
+            <label>Téléphone</label>
+            <input type="text" name="phone" required placeholder="0601020304">
+
+            <label>Adresse</label>
+            <input type="text" name="address" required placeholder="12 rue de la Paix, Paris">
+
+            <button type="submit">Créer le client</button>
+        </form>
+    </div>
+
+    {% include "clients/_list.html" %}
+
+</div>
+{% endblock %}
