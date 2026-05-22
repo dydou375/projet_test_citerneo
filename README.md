@@ -23,7 +23,6 @@ erDiagram
     CLIENT {
         int idClient PK
         string nom
-        string prenom
         string email
         string adresse
         datetime dateCreation
