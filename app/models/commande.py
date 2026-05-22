@@ -1,7 +1,11 @@
+from __future__ import annotations
 from enum import Enum
 from typing import Optional
+
 from sqlmodel import Field, Relationship, SQLModel
+
 from app.models.client import Client
+
 
 class OrderStatus(str, Enum):
     CREATED = "créée"

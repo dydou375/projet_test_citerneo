@@ -1,10 +1,10 @@
-from typing import Annotated
-
-from fastapi import Depends, FastAPI, HTTPException, Query
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 
+from sqlmodel import Field, Relationship, SQLModel
+
+from app.models.commande import Order
 
 
 class Client(SQLModel, table=True):
@@ -15,5 +15,4 @@ class Client(SQLModel, table=True):
     address: str
     created_at: datetime = Field(default_factory=datetime.now)
 
-    orders: List["commande"] = Relationship(back_populates="client")
-
+    orders: List["Order"] = Relationship(back_populates="client")
