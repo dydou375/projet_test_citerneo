@@ -9,6 +9,7 @@
                 <th>Téléphone</th>
                 <th>Adresse</th>
                 <th>Créé le</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -19,6 +20,16 @@
                 <td>{{ client.phone }}</td>
                 <td>{{ client.address }}</td>
                 <td>{{ client.created_at.strftime("%d/%m/%Y") }}</td>
+                <td>
+                    <button
+                        hx-delete="/clients/{{ client.id }}"
+                        hx-target="#client-list"
+                        hx-swap="outerHTML"
+                        hx-confirm="Supprimer {{ client.name }} ? Ses commandes seront aussi supprimées."
+                        style="width:auto; padding: 2px 8px; background:#e74c3c; font-size:0.8rem;">
+                        Supprimer
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

@@ -20,5 +20,5 @@ class Order(SQLModel, table=True):
     total_amount: float
     status: OrderStatus = Field(default=OrderStatus.CREATED)
 
-    client_id: int = Field(foreign_key="client.id")
+    client_id: int = Field(foreign_key="client.id", ondelete="CASCADE")
     client: Optional["Client"] = Relationship(back_populates="orders")
