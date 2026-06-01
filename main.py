@@ -10,11 +10,14 @@ from app.routes import clients, commandes
 
 
 def init_db():
+    # Crée les tables dans SQLite si elles n'existent pas encore.
+    # Si database.db existe déjà avec les tables, cette ligne ne fait rien.
     SQLModel.metadata.create_all(engine)
 
 
 def seed_db():
     with Session(engine) as session:
+        # On vérifie si la base est déjà peuplée pour ne pas réinsérer à chaque redémarrage.
         existing = session.exec(select(Client)).first()
         if existing:
             return
@@ -26,6 +29,9 @@ def seed_db():
         ]
         session.add_all(clients)
         session.commit()
+
+        # refresh() est nécessaire pour récupérer les id auto-générés par SQLite,
+        # dont on a besoin juste en dessous pour créer les commandes liées.
         for c in clients:
             session.refresh(c)
 
@@ -41,6 +47,8 @@ def seed_db():
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Tout ce qui est avant le yield s'exécute au démarrage de l'app.
+    # Tout ce qui serait après le yield s'exécuterait à l'arrêt (ici rien).
     init_db()
     seed_db()
     yield
@@ -53,10 +61,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# On enregistre les deux groupes de routes dans l'application.
 app.include_router(clients.router)
 app.include_router(commandes.router)
 
 
+# include_in_schema=False : cette route de redirection n'apparaît pas dans /docs.
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url="/commandes/")
