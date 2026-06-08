@@ -10,9 +10,13 @@ Application web de gestion de clients et de commandes, construite avec FastAPI, 
 - [uv](https://docs.astral.sh/uv/) (gestionnaire de paquets)
 
 ## Installation et lancement
+```bash
+# Clone du Projet
+git clone [votre-repo]
+```
 
 ```bash
-# Cloner le dépôt puis :
+# Lancement du projet
 uv run uvicorn main:app --reload
 ```
 
