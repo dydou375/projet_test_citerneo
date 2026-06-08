@@ -120,7 +120,9 @@ projet_test_citerneo/
 │   │   └── commande.py      # Modèle Order + enum OrderStatus
 │   └── routes/
 │       ├── clients.py       # GET/POST/DELETE /clients/
-│       └── commandes.py     # GET/POST/PATCH /commandes/
+│       └── commandes.py 
+├── docker/
+│   ├── docker-compose.yml
 └── templates/
     ├── base.html            # Layout commun (nav, CSS, HTMX)
     ├── clients/

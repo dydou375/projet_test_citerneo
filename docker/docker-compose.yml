@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: citerneo-postgres
+    environment:
+      POSTGRES_USER: citerneo
+      POSTGRES_PASSWORD: citerneo
+      POSTGRES_DB: citerneo
+    ports:
+      - "5432:5432"    # Accessible depuis l'app locale sur localhost:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U citerneo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:    # Volume persistant : les données survivent aux arrêts du container
