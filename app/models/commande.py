@@ -13,6 +13,15 @@ class OrderStatus(str, Enum):
     CANCELED = "annulée"
 
 
+ALLOWED_TRANSITIONS: dict[OrderStatus, list[OrderStatus]] = {
+    OrderStatus.CREATED:   [OrderStatus.CONFIRMED, OrderStatus.CANCELED],
+    OrderStatus.CONFIRMED: [OrderStatus.SHIPPED,   OrderStatus.CANCELED],
+    OrderStatus.SHIPPED:   [OrderStatus.DELIVERED, OrderStatus.CANCELED],
+    OrderStatus.DELIVERED: [],
+    OrderStatus.CANCELED:  [],
+}
+
+
 class Order(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     reference: str

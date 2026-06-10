@@ -4,6 +4,8 @@
     <td>{{ "%.2f €"|format(order.total_amount) }}</td>
     <td>{{ order.created_at.strftime("%d/%m/%Y") }}</td>
     <td>
+        {% set next_statuses = transitions[order.status] %}
+        {% if next_statuses %}
         <select class="statut"
                 name="status"
                 hx-patch="/commandes/{{ order.id }}/statut"
@@ -11,11 +13,15 @@
                 hx-swap="outerHTML"
                 hx-trigger="change"
                 hx-include="this">
-            {% for s in statuses %}
-            <option value="{{ s.value }}" {% if order.status == s %}selected{% endif %}>
-                {{ s.value }}
-            </option>
+            <option value="{{ order.status.value }}" selected>{{ order.status.value }}</option>
+            {% for s in next_statuses %}
+            <option value="{{ s.value }}">{{ s.value }}</option>
             {% endfor %}
         </select>
+        {% else %}
+        <span class="badge badge-{{ order.status.value|replace('é','e')|replace('è','e')|replace('î','i') }}">
+            {{ order.status.value }}
+        </span>
+        {% endif %}
     </td>
 </tr>

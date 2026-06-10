@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 from app.auth import require_auth
 from app.config import templates
 from app.database import engine
-from app.models import Client, Order, OrderStatus
+from app.models import ALLOWED_TRANSITIONS, Client, Order, OrderStatus
 from app.schemas import OrderCreate
 
 # dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
@@ -60,6 +60,7 @@ def list_orders(
             "orders": orders,
             "clients": clients,
             "statuses": OrderStatus,
+            "transitions": ALLOWED_TRANSITIONS,
             "filter_client_id": int(client_id) if client_id else None,
             "filter_status": status or None,
         },
@@ -120,7 +121,7 @@ def create_order(
     clients = session.exec(select(Client)).all()
     return templates.TemplateResponse(
         request, "commandes/_list.html",
-        {"orders": orders, "clients": clients, "statuses": OrderStatus},
+        {"orders": orders, "clients": clients, "statuses": OrderStatus, "transitions": ALLOWED_TRANSITIONS},
     )
 
 
@@ -142,6 +143,9 @@ def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Commande introuvable")
 
+    if new_status not in ALLOWED_TRANSITIONS[order.status]:
+        raise HTTPException(status_code=422, detail="Transition de statut non autorisée")
+
     order.status = new_status
     session.add(order)
     session.commit()
@@ -149,5 +153,5 @@ def update_order_status(
 
     return templates.TemplateResponse(
         request, "commandes/_row.html",
-        {"order": order, "statuses": OrderStatus},
+        {"order": order, "statuses": OrderStatus, "transitions": ALLOWED_TRANSITIONS},
     )
