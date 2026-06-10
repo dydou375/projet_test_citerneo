@@ -27,7 +27,43 @@
         </form>
     </div>
 
-    {% include "commandes/_list.html" %}
+    <div class="list-card">
+        <!-- Barre de filtres + export : formulaire GET classique (pas HTMX)
+             car on veut que l'URL reflète les filtres actifs. -->
+        <form method="GET" action="/commandes/" style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <select name="client_id" style="flex:1; margin:0;">
+                <option value="">Tous les clients</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if filter_client_id == client.id %}selected{% endif %}>
+                    {{ client.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="status" style="flex:1; margin:0;">
+                <option value="">Tous les statuts</option>
+                {% for s in statuses %}
+                <option value="{{ s.value }}" {% if filter_status == s.value %}selected{% endif %}>
+                    {{ s.value }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" style="width:auto; padding:0.5rem 1rem;">Filtrer</button>
+
+            <!-- formaction redirige ce bouton vers /export.csv avec les mêmes paramètres -->
+            <button type="submit" formaction="/commandes/export.csv"
+                    style="width:auto; padding:0.5rem 1rem; background:#27ae60;">
+                Exporter CSV
+            </button>
+
+            {% if filter_client_id or filter_status %}
+            <a href="/commandes/" style="align-self:center; font-size:0.85rem; color:#999;">✕ Réinitialiser</a>
+            {% endif %}
+        </form>
+
+        {% include "commandes/_list.html" %}
+    </div>
 
 </div>
 {% endblock %}

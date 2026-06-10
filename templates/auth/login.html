@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — Suivi de commandes</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 360px; }
+        h1 { font-size: 1.3rem; color: #2c3e50; margin-bottom: 1.5rem; text-align: center; }
+        label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 0.25rem; }
+        input { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; margin-bottom: 1rem; }
+        input:focus { outline: none; border-color: #3498db; }
+        button { width: 100%; padding: 0.7rem; background: #2c3e50; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        button:hover { background: #3498db; }
+        .error { background: #fdecea; color: #c0392b; padding: 0.6rem 0.8rem; border-radius: 4px; font-size: 0.85rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Suivi de commandes</h1>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/login">
+            <label for="username">Nom d'utilisateur</label>
+            <input type="text" id="username" name="username" required autofocus>
+
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Se connecter</button>
+        </form>
+    </div>
+</body>
+</html>

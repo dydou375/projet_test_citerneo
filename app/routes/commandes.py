@@ -1,33 +1,102 @@
+import csv
+import io
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
+from app.auth import require_auth
 from app.config import templates
 from app.database import engine
 from app.models import Client, Order, OrderStatus
 from app.schemas import OrderCreate
 
-router = APIRouter(prefix="/commandes", tags=["Commandes"])
+# dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
+router = APIRouter(prefix="/commandes", tags=["Commandes"], dependencies=[Depends(require_auth)])
 
 
-def get_session():# On crée une fonction de dépendance pour obtenir une session de base de données. Cela nous permet de réutiliser ce code dans tous nos endpoints sans avoir à répéter la logique d'ouverture et de fermeture de la session.
+def get_session():
     with Session(engine) as session:
         yield session
 
 
-@router.get("/", response_class=HTMLResponse)# Cet endpoint affiche la liste de toutes les commandes. On récupère également la liste des clients et des statuts pour pouvoir les afficher dans le template.
-def list_orders(request: Request, session: Session = Depends(get_session)):
-    orders = session.exec(select(Order).options(selectinload(Order.client))).all()
+def _apply_filters(query, client_id: Optional[str], status: Optional[str]):
+    """Applique les filtres client et statut sur une requête SQLModel.
+    Les deux paramètres sont des str pour accepter les chaînes vides du formulaire
+    (un select non rempli envoie "" qu'on ne peut pas convertir directement en int).
+    """
+    if client_id:  # "" est falsy → pas de filtre si rien n'est sélectionné
+        try:
+            query = query.where(Order.client_id == int(client_id))
+        except ValueError:
+            pass
+    if status:
+        try:
+            query = query.where(Order.status == OrderStatus(status))
+        except ValueError:
+            pass
+    return query
+
+
+@router.get("/", response_class=HTMLResponse)
+def list_orders(
+    request: Request,
+    # Paramètres de filtre optionnels passés dans l'URL (ex: /commandes/?status=livrée)
+    # Optional[str] et non int : le formulaire envoie "" quand rien n'est sélectionné.
+    client_id: Optional[str] = None,
+    status: Optional[str] = None,
+    session: Session = Depends(get_session),
+):
+    query = _apply_filters(select(Order).options(selectinload(Order.client)), client_id, status)
+    orders = session.exec(query).all()
     clients = session.exec(select(Client)).all()
+    # On convertit client_id en int pour la comparaison dans le template ({% if filter_client_id == client.id %})
     return templates.TemplateResponse(
         request, "commandes/index.html",
-        {"orders": orders, "clients": clients, "statuses": OrderStatus},
+        {
+            "orders": orders,
+            "clients": clients,
+            "statuses": OrderStatus,
+            "filter_client_id": int(client_id) if client_id else None,
+            "filter_status": status or None,
+        },
     )
 
 
-@router.post("/", response_class=HTMLResponse)# Cet endpoint permet de créer une nouvelle commande. Les données sont envoyées via un formulaire, et on utilise Pydantic pour valider ces données avant de les insérer dans la base de données.
+@router.get("/export.csv")
+def export_csv(
+    client_id: Optional[str] = None,
+    status: Optional[str] = None,
+    session: Session = Depends(get_session),
+):
+    # Mêmes filtres que la liste — ce qu'on voit, on l'exporte
+    query = _apply_filters(select(Order).options(selectinload(Order.client)), client_id, status)
+    orders = session.exec(query).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Référence", "Client", "Montant (€)", "Date", "Statut"])
+    for order in orders:
+        writer.writerow([
+            order.reference,
+            order.client.name if order.client else "",
+            f"{order.total_amount:.2f}",
+            order.created_at.strftime("%d/%m/%Y"),
+            order.status.value,
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=commandes.csv"},
+    )
+
+
+@router.post("/", response_class=HTMLResponse)
 def create_order(
     request: Request,
     reference: str = Form(...),
@@ -55,7 +124,7 @@ def create_order(
     )
 
 
-@router.patch("/{order_id}/statut", response_class=HTMLResponse) # Cet endpoint permet de mettre à jour le statut d'une commande. Le nouveau statut est envoyé via un formulaire, et on vérifie que ce statut est valide avant de l'enregistrer dans la base de données.
+@router.patch("/{order_id}/statut", response_class=HTMLResponse)
 def update_order_status(
     order_id: int,
     request: Request,

@@ -3,12 +3,14 @@ from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
+from app.auth import require_auth
 from app.config import templates
 from app.database import engine
 from app.models import Client, Order
 from app.schemas import ClientCreate
 
-router = APIRouter(prefix="/clients", tags=["Clients"])
+# dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
+router = APIRouter(prefix="/clients", tags=["Clients"], dependencies=[Depends(require_auth)])
 
 
 def get_session():
