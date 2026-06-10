@@ -1,141 +1,90 @@
 # Suivi de commandes — Citerneo
 
-Application web de gestion de clients et de commandes, construite avec FastAPI, HTMX et SQLite.
+Application web de gestion de clients et de commandes.  
+Stack : **FastAPI** · **HTMX** · **Jinja2** · **SQLite** (PostgreSQL via Docker optionnel)
 
 ---
 
-## Prérequis
+## Lancement rapide
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (gestionnaire de paquets)
-
-## Installation et lancement
-```bash
-# Clone du Projet
-git clone [votre-repo]
-```
+**Prérequis :** Python 3.11+ et [uv](https://docs.astral.sh/uv/)
 
 ```bash
-# Lancement du projet
+git clone <url-du-repo>
+cd projet_test_citerneo
+uv sync --system-certs
 uv run uvicorn main:app --reload
 ```
 
-Ouvrir ensuite `http://127.0.0.1:8000` dans le navigateur.  
-La base de données et les données de démonstration sont créées automatiquement au premier démarrage.
+Ouvrir `http://127.0.0.1:8000` — la base de données et les données de démo sont créées automatiquement.
+
+**Identifiants par défaut :** `admin` / `admin`
 
 ---
 
-## Stack technique
+## Configuration
 
-### Serveur web — Uvicorn + FastAPI
+Les variables d'environnement suivantes peuvent être définies avant le lancement :
 
-**Uvicorn** est le serveur web qui reçoit les requêtes HTTP et les transmet à l'application.  
-C'est un serveur ASGI (*Asynchronous Server Gateway Interface*), le standard Python pour les applications web asynchrones.
+| Variable | Défaut | Description |
+|---|---|---|
+| `APP_USERNAME` | `admin` | Nom d'utilisateur |
+| `APP_PASSWORD` | `admin` | Mot de passe |
+| `SECRET_KEY` | `dev-secret-...` | Clé de signature des sessions (à changer en prod) |
 
-**FastAPI** est le framework qui définit les routes (`GET /clients/`, `POST /commandes/`, etc.),
-valide les données entrantes via Pydantic, et construit les réponses.
-
-```
-Navigateur → Uvicorn → FastAPI → Route → Base de données
-                                       ↓
-Navigateur ← HTML/JSON ←←←←←←←←←←←←←←←
-```
-
-La commande `--reload` demande à Uvicorn de redémarrer automatiquement quand un fichier Python change — utile en développement uniquement.
-
-### Base de données — SQLite + SQLModel
-
-**SQLite** est une base de données relationnelle stockée dans un simple fichier (`database.db`).  
-Pas de serveur à installer, idéal pour le développement et les petites applications.
-
-**SQLModel** est la bibliothèque qui fait le lien entre Python et SQLite.  
-Elle permet de définir les tables comme des classes Python :
-
-```python
-class Client(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    email: str
-    ...
+```bash
+# Exemple
+APP_USERNAME=dylan APP_PASSWORD=monmotdepasse SECRET_KEY=unerandomstring uv run uvicorn main:app
 ```
 
-SQLModel génère automatiquement les requêtes SQL (`SELECT`, `INSERT`, etc.).
+---
 
-### Relation entre les tables
+## Fonctionnalités
 
-Un client peut avoir plusieurs commandes (relation **1-N**) :
-
-```
-CLIENT ──────────── COMMANDE
-  id  ←──── client_id (clé étrangère)
-  name           reference
-  email          total_amount
-  ...            status
-```
-
-Si un client est supprimé, toutes ses commandes le sont aussi (`CASCADE`).
-
-### Interface — Jinja2 + HTMX
-
-**Jinja2** est le moteur de templates : FastAPI lui passe des données Python, il génère du HTML.
-
-**HTMX** est une bibliothèque JavaScript légère qui permet de faire des requêtes HTTP depuis le HTML, sans écrire de JavaScript. Par exemple :
-
-```html
-<!-- Ce formulaire envoie une requête POST et remplace #client-list avec la réponse -->
-<form hx-post="/clients/" hx-target="#client-list" hx-swap="outerHTML">
-```
-
-HTMX évite le rechargement complet de la page. Quand on change le statut d'une commande, seule la ligne du tableau est mise à jour — pas toute la page.
-
-### Validation — Pydantic
-
-Toutes les données entrantes (formulaires) sont validées avant insertion en base :
-
-| Champ | Validation |
-|---|---|
-| Email | Format valide (`user@domaine.fr`) |
-| Téléphone | Format français (`0612345678`, `+33612345678`) |
-| Adresse | Doit commencer par un numéro de rue |
-| Montant | Strictement positif |
-| Statut | Dans la liste autorisée uniquement |
-
-En cas d'erreur, l'API retourne un `422 Unprocessable Entity` avec le détail du problème.
+- **Clients** : création, liste, suppression, vue des commandes par client
+- **Commandes** : création, liste, changement de statut en ligne
+- **Filtres** : par client et par statut sur la liste des commandes
+- **Export CSV** : export de la liste filtrée
+- **Authentification** : login/logout avec session cookie signé
 
 ---
 
 ## Structure du projet
 
 ```
-projet_test_citerneo/
-├── main.py                  # Point d'entrée : init DB, seed, routes
+├── main.py                  # Point d'entrée : démarrage, init DB, seed, routes
 ├── pyproject.toml           # Dépendances (géré par uv)
-├── database.db              # Fichier SQLite (créé au premier lancement)
 ├── app/
-│   ├── config.py            # Configuration Jinja2
-│   ├── database.py          # Connexion SQLite
-│   ├── schemas.py           # Validation Pydantic des entrées
+│   ├── auth.py              # Logique d'authentification (check credentials, require_auth)
+│   ├── config.py            # Instance Jinja2 partagée
+│   ├── database.py          # Connexion SQLite + activation des clés étrangères
+│   ├── schemas.py           # Validation Pydantic des formulaires
 │   ├── models/
-│   │   ├── client.py        # Modèle Client (table SQL)
+│   │   ├── client.py        # Modèle Client
 │   │   └── commande.py      # Modèle Order + enum OrderStatus
 │   └── routes/
+│       ├── auth.py          # GET/POST /login · GET /logout
 │       ├── clients.py       # GET/POST/DELETE /clients/
-│       └── commandes.py 
+│       └── commandes.py     # GET/POST /commandes/ · PATCH /commandes/{id}/statut · GET /commandes/export.csv
 ├── docker/
-│   ├── docker-compose.yml
+│   └── docker-compose.yml   # PostgreSQL (optionnel)
 └── templates/
-    ├── base.html            # Layout commun (nav, CSS, HTMX)
+    ├── base.html            # Layout commun
+    ├── auth/
+    │   └── login.html
     ├── clients/
-    │   ├── index.html       # Page liste + formulaire clients
-    │   ├── _list.html       # Fragment HTMX : tableau clients
-    │   └── commandes.html   # Page commandes d'un client
+    │   ├── index.html       # Page principale clients
+    │   ├── _list.html       # Fragment HTMX
+    │   └── commandes.html   # Commandes d'un client
     └── commandes/
-        ├── index.html       # Page liste + formulaire commandes
-        ├── _list.html       # Fragment HTMX : tableau commandes
-        └── _row.html        # Fragment HTMX : une ligne (statut)
+        ├── index.html       # Page principale commandes
+        ├── _list.html       # Fragment HTMX
+        └── _row.html        # Fragment HTMX (ligne statut)
 ```
 
-## Architecture Base de données
+---
+
+## Base de données
 
 ```mermaid
 erDiagram
@@ -158,15 +107,30 @@ erDiagram
     }
 ```
 
+Statuts possibles : `créée` → `confirmée` → `expédiée` → `livrée` · `annulée`
+
+Suppression d'un client : ses commandes sont supprimées en cascade.
+
+---
+
+## Passer à PostgreSQL
+
+```bash
+# 1. Démarrer PostgreSQL via Docker
+docker compose -f docker/docker-compose.yml up -d
+
+# 2. Lancer l'app en pointant vers PostgreSQL
+DATABASE_URL=postgresql://citerneo:citerneo@localhost:5432/citerneo uv run uvicorn main:app --reload
+```
+
+> **Note :** modifier `app/database.py` pour lire `DATABASE_URL` depuis l'environnement est nécessaire avant de faire tourner l'app avec PostgreSQL.
+
 ---
 
 ## Usage de l'IA
 
-Ce projet a été développé avec l'assistance de Claude (Anthropic).
+Ce projet a été développé avec l'assistance de **Claude (Anthropic)**.
 
-L'IA a été utilisée pour :
-- Générer la structure initiale des fichiers et des routes FastAPI
-- Déboguer les erreurs (import circulaire sur les modèles SQLModel, changement d'API Starlette pour `TemplateResponse`, problème N+1 sur les requêtes)
-- Écrire les templates HTMX/Jinja2
+L'IA a été utilisée pour : la structure initiale des fichiers, la génération des routes FastAPI et des templates HTMX/Jinja2, le débogage (import circulaire SQLModel, API Starlette, problème N+1).
 
-La relecture, les choix d'architecture (séparation routes/modèles/schémas, cascade sur suppression, activation des clés étrangères SQLite) et les ajustements de validation ont été faits manuellement.
+Les choix d'architecture, la relecture du code, les ajustements de validation et les décisions techniques (cascade, clés étrangères SQLite, `secrets.compare_digest`) ont été faits et vérifiés manuellement.
