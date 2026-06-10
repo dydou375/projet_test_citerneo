@@ -1,6 +1,6 @@
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlmodel import create_engine
+from sqlmodel import Session, create_engine
 
 # Chemin vers le fichier SQLite. Les 3 slashes signifient "chemin relatif".
 DATABASE_URL = "sqlite:///database.db"
@@ -22,3 +22,8 @@ engine = create_engine(
     # qui interdit d'utiliser une connexion depuis plusieurs threads.
     connect_args={"check_same_thread": False},
 )
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session

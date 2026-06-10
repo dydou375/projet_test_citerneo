@@ -3,19 +3,16 @@ from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
+
 from app.auth import require_auth
 from app.config import templates
-from app.database import engine
+from app.database import get_session
 from app.models import Client, Order
 from app.schemas import ClientCreate
 
 # dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
 router = APIRouter(prefix="/clients", tags=["Clients"], dependencies=[Depends(require_auth)])
 
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 @router.get("/", response_class=HTMLResponse) # Cet endpoint affiche la liste de tous les clients. On récupère tous les clients de la base de données et on les passe au template pour les afficher.

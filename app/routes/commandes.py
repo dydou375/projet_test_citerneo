@@ -10,17 +10,13 @@ from sqlmodel import Session, select
 
 from app.auth import require_auth
 from app.config import templates
-from app.database import engine
+from app.database import get_session
 from app.models import ALLOWED_TRANSITIONS, Client, Order, OrderStatus
 from app.schemas import OrderCreate
 
 # dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
 router = APIRouter(prefix="/commandes", tags=["Commandes"], dependencies=[Depends(require_auth)])
 
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 def _apply_filters(query, client_id: Optional[str], status: Optional[str]):
