@@ -5,6 +5,7 @@ from typing import Optional
 from sqlmodel import Field, Relationship, SQLModel
 
 
+# str, Enum → les valeurs sont de vraies chaînes Python, SQLite stocke "créée" pas "CREATED"
 class OrderStatus(str, Enum):
     CREATED = "créée"
     CONFIRMED = "confirmée"
@@ -13,6 +14,7 @@ class OrderStatus(str, Enum):
     CANCELED = "annulée"
 
 
+# liste vide = état terminal, aucune transition possible depuis cet état
 ALLOWED_TRANSITIONS: dict[OrderStatus, list[OrderStatus]] = {
     OrderStatus.CREATED:   [OrderStatus.CONFIRMED, OrderStatus.CANCELED],
     OrderStatus.CONFIRMED: [OrderStatus.SHIPPED,   OrderStatus.CANCELED],
@@ -29,5 +31,6 @@ class Order(SQLModel, table=True):
     total_amount: float
     status: OrderStatus = Field(default=OrderStatus.CREATED)
 
+    # ondelete="CASCADE" → si le client est supprimé, ses commandes le sont aussi côté base
     client_id: int = Field(foreign_key="client.id", ondelete="CASCADE")
     client: Optional["Client"] = Relationship(back_populates="orders")

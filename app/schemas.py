@@ -48,14 +48,14 @@ class OrderCreate(BaseModel):
     total_amount: float
     client_id: int
 
-    @field_validator("total_amount")# On vérifie que le montant total est positif
+    @field_validator("total_amount")
     @classmethod
     def positive_amount(cls, v: float) -> float:
         if v <= 0:
             raise ValueError("Le montant doit être positif")
         return v
 
-    @field_validator("reference")# On vérifie que la référence n'est pas vide ou composée uniquement d'espaces
+    @field_validator("reference")
     @classmethod
     def not_empty(cls, v: str) -> str:
         if not v.strip():

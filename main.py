@@ -60,18 +60,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# SessionMiddleware stocke la session dans un cookie signé avec la SECRET_KEY.
-# En prod, définir une vraie clé aléatoire via la variable d'environnement SECRET_KEY.
+# cookie de session signé avec SECRET_KEY — définir une vraie clé en prod
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-production"),
 )
 
-# Gestionnaire pour les routes protégées accédées sans être connecté.
 @app.exception_handler(RequiresLogin)
 async def requires_login_handler(request: Request, _exc: RequiresLogin):
-    # Les requêtes HTMX ne suivent pas les redirections HTTP classiques.
-    # On utilise l'en-tête HX-Redirect pour lui demander de rediriger la page entière.
+    # HTMX ignore les redirections HTTP classiques → on passe par l'en-tête HX-Redirect
     if request.headers.get("HX-Request"):
         response = Response(status_code=200)
         response.headers["HX-Redirect"] = "/login"

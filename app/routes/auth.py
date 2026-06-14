@@ -24,7 +24,6 @@ def login(
     if check_credentials(username, password):
         request.session["logged_in"] = True
         request.session["username"] = username
-        # 302 : redirection temporaire vers la page principale après connexion.
         return RedirectResponse(url="/commandes/", status_code=302)
 
     # Identifiants incorrects : on réaffiche le formulaire avec un message d'erreur.

@@ -3,25 +3,23 @@ from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
-
 from app.auth import require_auth
 from app.config import templates
 from app.database import get_session
 from app.models import Client, Order
 from app.schemas import ClientCreate
 
-# dependencies=[Depends(require_auth)] protège toutes les routes de ce router d'un coup.
+# toutes les routes de ce fichier sont protégées d'un coup, pas besoin de le répéter sur chaque fonction
 router = APIRouter(prefix="/clients", tags=["Clients"], dependencies=[Depends(require_auth)])
 
 
-
-@router.get("/", response_class=HTMLResponse) # Cet endpoint affiche la liste de tous les clients. On récupère tous les clients de la base de données et on les passe au template pour les afficher.
+@router.get("/", response_class=HTMLResponse)
 def list_clients(request: Request, session: Session = Depends(get_session)):
     clients = session.exec(select(Client)).all()
     return templates.TemplateResponse(request, "clients/index.html", {"clients": clients})
 
 
-@router.post("/", response_class=HTMLResponse) # Cet endpoint permet de créer un nouveau client. Les données sont envoyées via un formulaire, et on utilise Pydantic pour valider ces données avant de les insérer dans la base de données.
+@router.post("/", response_class=HTMLResponse)
 def create_client(
     request: Request,
     name: str = Form(...),
@@ -50,11 +48,12 @@ def delete_client(client_id: int, request: Request, session: Session = Depends(g
         raise HTTPException(status_code=404, detail="Client introuvable")
     session.delete(client)
     session.commit()
+    # les commandes liées sont supprimées automatiquement par SQLite (CASCADE défini dans le modèle)
     clients = session.exec(select(Client)).all()
     return templates.TemplateResponse(request, "clients/_list.html", {"clients": clients})
 
 
-@router.get("/{client_id}/commandes", response_class=HTMLResponse) #    Cet endpoint affiche la liste des commandes d'un client spécifique. On vérifie d'abord que le client existe, puis on récupère toutes les commandes associées à ce client pour les afficher dans le template.
+@router.get("/{client_id}/commandes", response_class=HTMLResponse)
 def get_client_orders(client_id: int, request: Request, session: Session = Depends(get_session)):
     client = session.get(Client, client_id)
     if not client:
